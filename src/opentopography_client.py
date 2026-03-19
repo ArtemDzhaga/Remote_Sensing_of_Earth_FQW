@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Загрузка DEM с OpenTopography и базовая предобработка.
-Поддерживается район рек Хоста и Мзымта (Сочи) — горная местность, реки, застройка.
+Рассматриваем район рек Хоста и Мзымта (Сочи) — горная местность, реки, застройка.
 """
 import argparse
 import os
@@ -24,7 +24,7 @@ try:
 except ImportError:
     requests = None
 
-from config import REGION_SOCHI_KHOSTA_MZYMTA, DEMTYPE_CHOICES
+from config import REGIONS, DEFAULT_REGION, DEMTYPE_CHOICES
 
 BASE_URL = "https://portal.opentopography.org/API/globaldem"
 
@@ -126,15 +126,17 @@ def reproject_to_epsg(src_path: Path, dst_path: Path, epsg: int = 3857) -> None:
 def basic_stats(path: Path) -> Tuple[float, float, float, float, float]:
     with rasterio.open(path) as src:
         data = src.read(1, masked=True)
-        arr = data.compressed()
-        if arr.size == 0:
+        # DEM может быть int16 (OpenTopography); для расчёта доли NaN переводим в float
+        arr_float = np.ma.filled(data.astype(np.float64), np.nan)
+        valid = arr_float[~np.isnan(arr_float)]
+        if valid.size == 0:
             return (float("nan"),) * 5
         return (
-            float(np.nanmin(arr)),
-            float(np.nanmax(arr)),
-            float(np.nanmean(arr)),
-            float(np.nanstd(arr)),
-            float(np.mean(np.isnan(data.filled(np.nan)))),
+            float(np.nanmin(arr_float)),
+            float(np.nanmax(arr_float)),
+            float(np.nanmean(arr_float)),
+            float(np.nanstd(arr_float)),
+            float(np.mean(np.isnan(arr_float))),
         )
 
 
@@ -163,9 +165,9 @@ def main() -> None:
     parser.add_argument(
         "--region",
         type=str,
-        default="sochi",
-        choices=["sochi"],
-        help="Регион: sochi — район рек Хоста и Мзымта (Сочи)",
+        default=DEFAULT_REGION,
+        choices=sorted(REGIONS.keys()),
+        help="Регион (bbox в WGS84) для загрузки DEM",
     )
     parser.add_argument(
         "--demtype",
@@ -192,12 +194,8 @@ def main() -> None:
     ensure_dir(raw_dir)
     ensure_dir(processed_dir)
 
-    if args.region == "sochi":
-        bbox = REGION_SOCHI_KHOSTA_MZYMTA
-        raw_name = "sochi_khosta_mzymta_dem_raw.tif"
-    else:
-        bbox = REGION_SOCHI_KHOSTA_MZYMTA
-        raw_name = "dem_raw.tif"
+    bbox = REGIONS[args.region]
+    raw_name = f"{args.region}_dem_raw.tif"
 
     raw_path = raw_dir / raw_name
     processed_path = processed_dir / f"{raw_path.stem.replace('_raw', '')}_epsg{args.epsg}.tif"
