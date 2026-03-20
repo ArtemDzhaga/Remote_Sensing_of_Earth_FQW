@@ -4,9 +4,13 @@
 
 ### Текущее состояние
 
-- Инициализирован локальный git-репозиторий.
-- Загрузка DEM с OpenTopography для **района рек Хоста и Мзымта (Сочи)** — горная местность с перепадом высот, реки, жилая застройка.
-- Базовая предобработка: репроекция в выбранный EPSG, статистика по качеству.
+-Done- Инициализирован локальный git-репозиторий.
+-Done- Сделаны скрипты для скачивания RGB и SRA снимков с ряда спутников:
+      1. Создан CLI для указанных скриптов
+      2. Можно подсчитать количество существующих сцен по области за указанный период с помощью алиаса "list"
+      3. Можно скачать изображения с заданными CLI-параметрами с помощью алиаса "download"
+-WIP-  Загрузка DEM с OpenTopography для **района рек Хоста и Мзымта (Сочи)** — горная местность с перепадом высот, реки, жилая застройка.
+-WIP-  Базовая предобработка: репроекция в выбранный EPSG, статистика по качеству.
 
 ### Быстрый старт (локально)
 
@@ -16,53 +20,12 @@ source .venv/bin/activate  # macOS / Linux
 pip install -r requirements.txt
 ```
 
-Загрузка DEM по району Сочи (требуется API-ключ OpenTopography):
-
-```bash
-export OPENTOPOGRAPHY_API_KEY="ваш_ключ"
-python src/opentopography_client.py
-```
-
-Тестовый запуск без API (искусственный DEM):
-
-```bash
-python src/opentopography_client.py --demo
-```
-
-Дополнительно: `--demtype SRTMGL1` (по умолчанию), `COP30`, `NASADEM`, `AW3D30`, `SRTMGL3`; `--epsg 3857`.
-
-**Валидация и визуализация DEM (отчёт о качестве):**
-
-```bash
-python src/validate_dem.py data/processed/sochi_khosta_mzymta_dem_epsg3857.tif
-```
-
-Скрипт создаёт в `docs/quality_report/`:
-- **2D-карту высот** (PNG)
-- **3D-рендер** (PNG) — быстрый артефакт для отчётов/CI
-- **интерактивную 3D-сцену** (HTML) — чтобы крутить/зумить рельеф
-- гистограмму и Markdown-отчёт
-
-Полезные параметры 3D:
-
-```bash
-python src/validate_dem.py data/processed/sochi_khosta_mzymta_dem_epsg3857.tif --view iso --z-exag 2.0
-```
-
-Если HTML не нужен:
-
-```bash
-python src/validate_dem.py data/processed/sochi_khosta_mzymta_dem_epsg3857.tif --no-html
-```
-
-Для проверки геопривязки откройте GeoTIFF в QGIS.
-
 **Скачивание спутниковых снимков в `raw/` + метаданные (Sentinel-2 или Landsat):**
 
 ```bash
 python src/download_satellite_rgb.py --help
 python src/download_satellite_rgb.py download --help
-python src/download_satellite_rgb.py download --region sochi_khosta_mzymta_wide --satellite sentinel2 --month 2025-09 --with-nir --limit 1
+python src/download_satellite_rgb.py download --region sochi_khosta_mzymta_small --satellite sentinel2 --month 2025-09 --with-nir --limit 1
 ```
 
 Скрипт кладёт в `data/raw/runs/<параметры>_<дата_до_секунд>/`:
@@ -77,7 +40,7 @@ python src/download_satellite_rgb.py download --region sochi_khosta_mzymta_wide 
 
 ```bash
 python src/download_satellite_sra.py --help
-python src/download_satellite_sra.py download --region sochi_khosta_mzymta_wide --month 2021-07 --limit 1
+python src/download_satellite_sra.py download --region sochi_khosta_mzymta_small --month 2021-07 --limit 1
 ```
 
 ### Контекст проекта (дальнейшие этапы)
@@ -94,5 +57,4 @@ python src/download_satellite_sra.py download --region sochi_khosta_mzymta_wide 
 - `data/raw/` — необработанные данные (DEM, спутниковые снимки).
 - `data/processed/` — предобработанные данные.
 - `docs/quality_report/` — отчёты о качестве и визуализации DEM.
-- `notebooks/` — исследовательские ноутбуки (при необходимости).
 
