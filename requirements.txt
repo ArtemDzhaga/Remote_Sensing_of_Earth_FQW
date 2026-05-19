@@ -1,8 +1,9 @@
+# Совместимо с pyproject.toml / pip install -e .
+# Дополнительно для некоторых систем: pip install GDAL>=3.8 (или через conda)
 numpy>=1.26
 requests>=2.31
 pandas>=2.2
 rasterio>=1.3
-GDAL>=3.8
 matplotlib>=3.8
 scikit-image>=0.24
 opencv-python-headless>=4.10
@@ -14,3 +15,7 @@ planetary-computer>=1.0
 odc-stac>=0.3
 xarray>=2024.7
 rioxarray>=0.16
+boto3>=1.34
+earthaccess>=0.15
+torch>=2.2
+segmentation-models-pytorch>=0.3.3

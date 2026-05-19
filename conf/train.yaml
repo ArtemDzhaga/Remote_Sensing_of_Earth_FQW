@@ -1,0 +1,11 @@
+# Заготовка гиперпараметров ML (не используется кодом до реализации dem.ml.train).
+
+patch_size: 256
+patch_overlap: 32
+batch_size: 8
+epochs: 40
+learning_rate: 0.0003
+encoder: resnet18
+loss:
+  type: slope_aware_mae
+  slope_weight: 1.0

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  После SNAPHU unwrap: импорт развёрнутой фазы → высота → terrain correction → GeoTIFF.
+  Параметризуется dem.insar.pipeline phase-to-height (ifg DIMAP, UnwPhase HDR, DEM,
+  pixel spacing, путь GeoTIFF). Описание плейсхолдеров — в README пакета.
+-->
+<graph id="S1_SnaphuImport_PhaseToElevation">
+  <version>1.0</version>
+
+  <node id="Read-Ifg">
+    <operator>Read</operator>
+    <sources/>
+    <parameters>
+      <file>__IFG_DIM__</file>
+    </parameters>
+  </node>
+
+  <node id="Read-Unwrapped">
+    <operator>Read</operator>
+    <sources/>
+    <parameters>
+      <file>__UNW_HDR__</file>
+    </parameters>
+  </node>
+
+  <node id="SnaphuImport">
+    <operator>SnaphuImport</operator>
+    <sources>
+      <sourceProduct refid="Read-Ifg"/>
+      <sourceProduct.1 refid="Read-Unwrapped"/>
+    </sources>
+    <parameters>
+      <doNotKeepWrapped>false</doNotKeepWrapped>
+    </parameters>
+  </node>
+
+  <node id="PhaseToElevation">
+    <operator>PhaseToElevation</operator>
+    <sources>
+      <sourceProduct refid="SnaphuImport"/>
+    </sources>
+    <parameters>
+      <demName>__DEM_NAME__</demName>
+      <demResamplingMethod>BICUBIC_INTERPOLATION</demResamplingMethod>
+    </parameters>
+  </node>
+
+  <node id="Terrain-Correction">
+    <operator>Terrain-Correction</operator>
+    <sources>
+      <sourceProduct refid="PhaseToElevation"/>
+    </sources>
+    <parameters>
+      <demName>__DEM_NAME__</demName>
+      <demResamplingMethod>BICUBIC_INTERPOLATION</demResamplingMethod>
+      <imgResamplingMethod>BILINEAR_INTERPOLATION</imgResamplingMethod>
+      <pixelSpacingInMeter>__PIXEL_SPACING__</pixelSpacingInMeter>
+      <mapProjection>WGS84(DD)</mapProjection>
+      <nodataValueAtSea>true</nodataValueAtSea>
+      <saveDEM>false</saveDEM>
+      <saveLatLon>false</saveLatLon>
+      <saveIncidenceAngleFromEllipsoid>false</saveIncidenceAngleFromEllipsoid>
+      <saveLocalIncidenceAngle>false</saveLocalIncidenceAngle>
+      <saveProjectedLocalIncidenceAngle>false</saveProjectedLocalIncidenceAngle>
+      <saveSelectedSourceBand>true</saveSelectedSourceBand>
+      <outputComplex>false</outputComplex>
+    </parameters>
+  </node>
+
+  <node id="Write-DEM">
+    <operator>Write</operator>
+    <sources>
+      <sourceProduct refid="Terrain-Correction"/>
+    </sources>
+    <parameters>
+      <file>__OUT_TIF__</file>
+      <formatName>GeoTIFF</formatName>
+    </parameters>
+  </node>
+</graph>

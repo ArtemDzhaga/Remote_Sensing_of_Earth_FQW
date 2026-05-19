@@ -1,0 +1,39 @@
+# Зеркало ключевых регионов из dem.config (при изменении синхронизируйте с src/dem/config.py).
+# Источник истины по умолчанию — Python REGIONS.
+
+default_region: sochi_khosta_mzymta_small
+
+regions:
+  sochi_khosta_mzymta_wide:
+    south: 43.35
+    north: 43.75
+    west: 39.75
+    east: 40.15
+
+  sochi_mzymta_krasnaya_polyana:
+    south: 43.50
+    north: 43.74
+    west: 39.90
+    east: 40.35
+
+  sochi_khosta_agura:
+    south: 43.48
+    north: 43.62
+    west: 39.78
+    east: 39.95
+
+  sochi_khosta_mzymta_small:
+    south: 43.378606
+    north: 43.545557
+    west: 39.914017
+    east: 40.060959
+    polygon:
+      type: Polygon
+      coordinates:
+        - - [39.914017, 43.411902]
+          - [39.987488, 43.378606]
+          - [40.022507, 43.445443]
+          - [40.046539, 43.497758]
+          - [40.060959, 43.531123]
+          - [39.973755, 43.545557]
+          - [39.914017, 43.411902]

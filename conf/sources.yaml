@@ -1,0 +1,11 @@
+# Aliases источников DEM для OpenTopography и связка с dem.ingest.open_dem_sources.
+# Полное описание типов — в коде OPEN_DEM_SOURCES.
+
+default_reference_aliases:
+  - cop30
+  - srtm30
+
+# Пример переопределения под эксперимент:
+# custom_download:
+#   demtype: COP30
+#   label: Copernicus Global DSM 30m

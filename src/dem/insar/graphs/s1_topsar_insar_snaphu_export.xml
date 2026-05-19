@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Sentinel-1 IW SLC InSAR pipeline до экспорта в SNAPHU.
+  Подстановки выполняются dem.insar.pipeline run-pair: master, slave, subswath,
+  polarization, DEM name, export dir, ifg DIMAP. Описание плейсхолдеров — в README пакета.
+-->
+<graph id="S1_TOPSAR_InSAR_SnaphuExport">
+  <version>1.0</version>
+
+  <node id="Read-Master">
+    <operator>Read</operator>
+    <sources/>
+    <parameters>
+      <file>__MASTER__</file>
+    </parameters>
+  </node>
+
+  <node id="TOPSAR-Split-Master">
+    <operator>TOPSAR-Split</operator>
+    <sources>
+      <sourceProduct refid="Read-Master"/>
+    </sources>
+    <parameters>
+      <subswath>__SUBSWATH__</subswath>
+      <selectedPolarisations>__POLARIZATION__</selectedPolarisations>
+      __BURST_RANGE__
+    </parameters>
+  </node>
+
+  <node id="Apply-Orbit-File-Master">
+    <operator>Apply-Orbit-File</operator>
+    <sources>
+      <sourceProduct refid="TOPSAR-Split-Master"/>
+    </sources>
+    <parameters>
+      <orbitType>Sentinel Precise (Auto Download)</orbitType>
+      <polyDegree>3</polyDegree>
+      <continueOnFail>true</continueOnFail>
+    </parameters>
+  </node>
+
+  __EAP_MASTER_NODE__
+
+  <node id="Read-Slave">
+    <operator>Read</operator>
+    <sources/>
+    <parameters>
+      <file>__SLAVE__</file>
+    </parameters>
+  </node>
+
+  <node id="TOPSAR-Split-Slave">
+    <operator>TOPSAR-Split</operator>
+    <sources>
+      <sourceProduct refid="Read-Slave"/>
+    </sources>
+    <parameters>
+      <subswath>__SUBSWATH__</subswath>
+      <selectedPolarisations>__POLARIZATION__</selectedPolarisations>
+      __BURST_RANGE__
+    </parameters>
+  </node>
+
+  <node id="Apply-Orbit-File-Slave">
+    <operator>Apply-Orbit-File</operator>
+    <sources>
+      <sourceProduct refid="TOPSAR-Split-Slave"/>
+    </sources>
+    <parameters>
+      <orbitType>Sentinel Precise (Auto Download)</orbitType>
+      <polyDegree>3</polyDegree>
+      <continueOnFail>true</continueOnFail>
+    </parameters>
+  </node>
+
+  __EAP_SLAVE_NODE__
+
+  <node id="Back-Geocoding">
+    <operator>Back-Geocoding</operator>
+    <sources>
+      <sourceProduct refid="__MASTER_BACK_GEOCODING_SOURCE__"/>
+      <sourceProduct.1 refid="__SLAVE_BACK_GEOCODING_SOURCE__"/>
+    </sources>
+    <parameters>
+      <demName>__DEM_NAME__</demName>
+      <demResamplingMethod>BICUBIC_INTERPOLATION</demResamplingMethod>
+      <resamplingType>BISINC_5_POINT_INTERPOLATION</resamplingType>
+      <maskOutAreaWithoutElevation>true</maskOutAreaWithoutElevation>
+      <outputDerampDemodPhase>false</outputDerampDemodPhase>
+    </parameters>
+  </node>
+
+  <node id="Enhanced-Spectral-Diversity">
+    <operator>Enhanced-Spectral-Diversity</operator>
+    <sources>
+      <sourceProduct refid="Back-Geocoding"/>
+    </sources>
+    <parameters>
+      <fineWinWidthStr>512</fineWinWidthStr>
+      <fineWinHeightStr>512</fineWinHeightStr>
+      <fineWinAccAzimuth>16</fineWinAccAzimuth>
+      <fineWinAccRange>16</fineWinAccRange>
+      <fineWinOversampling>128</fineWinOversampling>
+      <xCorrThreshold>0.1</xCorrThreshold>
+      <cohThreshold>0.3</cohThreshold>
+      <numBlocksPerOverlap>10</numBlocksPerOverlap>
+    </parameters>
+  </node>
+
+  <node id="Interferogram">
+    <operator>Interferogram</operator>
+    <sources>
+      <sourceProduct refid="Enhanced-Spectral-Diversity"/>
+    </sources>
+    <parameters>
+      <subtractFlatEarthPhase>true</subtractFlatEarthPhase>
+      <srpPolynomialDegree>5</srpPolynomialDegree>
+      <srpNumberPoints>501</srpNumberPoints>
+      <orbitDegree>3</orbitDegree>
+      <includeCoherence>true</includeCoherence>
+      <cohWinAz>10</cohWinAz>
+      <cohWinRg>10</cohWinRg>
+      <squarePixel>true</squarePixel>
+      <subtractTopographicPhase>false</subtractTopographicPhase>
+    </parameters>
+  </node>
+
+  <node id="TOPSAR-Deburst">
+    <operator>TOPSAR-Deburst</operator>
+    <sources>
+      <sourceProduct refid="Interferogram"/>
+    </sources>
+    <parameters>
+      <selectedPolarisations>__POLARIZATION__</selectedPolarisations>
+    </parameters>
+  </node>
+
+  <node id="GoldsteinPhaseFiltering">
+    <operator>GoldsteinPhaseFiltering</operator>
+    <sources>
+      <sourceProduct refid="TOPSAR-Deburst"/>
+    </sources>
+    <parameters>
+      <alpha>1.0</alpha>
+      <FFTSizeString>64</FFTSizeString>
+      <windowSizeString>3</windowSizeString>
+      <useCoherenceMask>false</useCoherenceMask>
+      <coherenceThreshold>0.2</coherenceThreshold>
+    </parameters>
+  </node>
+
+  <node id="Write-Ifg">
+    <operator>Write</operator>
+    <sources>
+      <sourceProduct refid="GoldsteinPhaseFiltering"/>
+    </sources>
+    <parameters>
+      <file>__IFG_DIM__</file>
+      <formatName>BEAM-DIMAP</formatName>
+    </parameters>
+  </node>
+
+  <node id="SnaphuExport">
+    <operator>SnaphuExport</operator>
+    <sources>
+      <sourceProduct refid="GoldsteinPhaseFiltering"/>
+    </sources>
+    <parameters>
+      <targetFolder>__EXPORT_DIR__</targetFolder>
+      <statCostMode>TOPO</statCostMode>
+      <initMethod>MCF</initMethod>
+      <numberOfTileRows>10</numberOfTileRows>
+      <numberOfTileCols>10</numberOfTileCols>
+      <numberOfProcessors>4</numberOfProcessors>
+      <rowOverlap>200</rowOverlap>
+      <colOverlap>200</colOverlap>
+      <tileCostThreshold>500</tileCostThreshold>
+    </parameters>
+  </node>
+</graph>
