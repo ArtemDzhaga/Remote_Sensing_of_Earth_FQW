@@ -270,25 +270,3 @@ python scripts/build_vkr_final_artifacts.py
 ```text
 reports/vkr_final_artifacts_2026-05-15/
 ```
-
-Перед публикацией отчётов нужно проверить, что в них нет абсолютных путей
-конкретной машины. Для проверки:
-
-```bash
-rg -n "/Users/|/Volumes/|Desktop/Output" README.md docs reports scripts src conf
-```
-
-## Что нельзя хранить в Git
-
-В репозиторий не должны попадать:
-
-- SLC ZIP/SAFE и распакованные Sentinel-1 продукты;
-- GeoTIFF, SNAP `.dim/.data`, SNAPHU `.img/.hdr`;
-- обучающие `.npz`, `.npy`, чекпойнты `.pt/.pth/.ckpt`;
-- локальные `outputs/`, `data/raw/`, `data/processed/`, `models/`;
-- виртуальные окружения и кэши Python;
-- отчёты, содержащие абсолютные пути конкретной машины.
-
-Текущая защита описана в `.gitignore`. Если тяжёлые файлы уже попадали в
-историю Git, одного `.gitignore` недостаточно: историю нужно чистить отдельно
-через `git filter-repo` или BFG Repo-Cleaner.
